@@ -10,10 +10,10 @@ yadirGetKeyWords <- function(CampaignIds = "14163546",
     stop("You must enter login and API token!")
   }
   
-  #Ôèêñèðóåì âðåìÿ íà÷àëà ðàáîòû
+  #Фиксируем время начала работы
   start_time  <- Sys.time()
   
-  #Ðåçóëüòèðóþùèé äàòà ôðåéì
+  #Результирующий дата фрейм
   result      <- data.frame(Id                            = integer(0), 
                             Keyword                       = character(0),
                             AdGroupId                     = integer(0),
@@ -33,27 +33,27 @@ yadirGetKeyWords <- function(CampaignIds = "14163546",
                             Bid                           = integer(0),
                             ContextBid                    = integer(0))
   
-  #Ïåðåâîäèì ôèëüòð ïî ñòàòóñó â json
+  #Переводим фильтр по статусу в json
   States          <- paste("\"",States,"\"",collapse=", ",sep="")
   
-  #Îïðåäåëÿåì êîëè÷åñòâî êàìïàíèé êîòîðîå òðåáóåòñÿ îáðàáîòàòü
+  #Определяем количество кампаний которое требуется обработать
   camp_num     <- as.integer(length(CampaignIds))
   camp_start   <- 1
   camp_step    <- 10
   
   packageStartupMessage("Processing", appendLF = F)
-  #Çàïóñêàåì öèêë îáðàáîòêè êàìïàíèé
+  #Запускаем цикл обработки кампаний
   while(camp_start <= camp_num){
     
-    #îïðåäåëÿåì êàêîå ê-âî ÐÊ íàäî îáðàáîòàòü
+    #определяем какое к-во РК надо обработать
     camp_step   <-  if(camp_num - camp_start > 10) camp_step else camp_num - camp_start + 1
     
-    #Ïðåîáðàçóåì ñïèñîê ðåêëàìíûõ êàìïàíèé
+    #Преобразуем список рекламных кампаний
     Ids             <- ifelse(is.na(Ids), NA,paste0(Ids, collapse = ","))
     AdGroupIds      <- ifelse(is.na(AdGroupIds),NA,paste0(AdGroupIds, collapse = ","))
     CampaignIdsTmp  <- paste("\"",CampaignIds[camp_start:(camp_start + camp_step - 1)],"\"",collapse=", ",sep="")
     
-    #Çàäà¸ì íà÷àëüíûé offset
+    #Задаём начальный offset
     lim <- 0
     
     while(lim != "stoped"){
@@ -94,13 +94,13 @@ yadirGetKeyWords <- function(CampaignIds = "14163546",
       stop_for_status(answer)
       dataRaw <- content(answer, "parsed", "application/json")
       
-      #Ïðîâåðêà íå âåðíóë ëè çàïðîñ îøèáêó
+      #Проверка не вернул ли запрос ошибку
       if(length(dataRaw$error) > 0){
         stop(paste0(dataRaw$error$error_string, " - ", dataRaw$error$error_detail))
       }
       
       
-      #Ïàðñåð îòâåòà
+      #Парсер ответа
       for(Keywords_i in 1:length(dataRaw$result$Keywords)){
         result      <- rbind(result,
                              data.frame(Id                            = ifelse(is.null(dataRaw$result$Keywords[[Keywords_i]]$Id), NA,dataRaw$result$Keywords[[Keywords_i]]$Id),
@@ -122,23 +122,23 @@ yadirGetKeyWords <- function(CampaignIds = "14163546",
                                         Bid                           = ifelse(is.null(dataRaw$result$Keywords[[Keywords_i]]$Bid), NA,dataRaw$result$Keywords[[Keywords_i]]$Bid / 1000000),
                                         ContextBid                    = ifelse(is.null(dataRaw$result$Keywords[[Keywords_i]]$ContextBid), NA,dataRaw$result$Keywords[[Keywords_i]]$ContextBid / 1000000)))
       }
-      #Äîáàâëÿåì òî÷êó, ÷òî ïðîöåññ çàãðóçêè èä¸ò
+      #Добавляем точку, что процесс загрузки идёт
       packageStartupMessage(".", appendLF = F)
-      #Ïðîâåðÿåì îñòàëèñü ëè åù¸ ñòðîêè êîòîðûå íàäî çàáðàòü
+      #Проверяем остались ли ещё строки которые надо забрать
       lim <- ifelse(is.null(dataRaw$result$LimitedBy), "stoped",dataRaw$result$LimitedBy + 1)
     }
     
-    #Îïðåäåëÿåì ñëåäóþùèé ïóë êàìïàíèé
+    #Определяем следующий пул кампаний
     camp_start <- camp_start + camp_step
   }
   
-  #Ôèêñèðóåì âðåìÿ çàâåðøåíèÿ îáðàáîòêè
+  #Фиксируем время завершения обработки
   stop_time <- Sys.time()
   
-  #Ñîîáùåíèå î òîì, ÷òî çàãðóçêà äàííûõ ïðîøëà óñïåøíî
+  #Сообщение о том, что загрузка данных прошла успешно
   #��������� � ���, ��� �������� ������ ������ �������
   packageStartupMessage("Done", appendLF = T)
   packageStartupMessage(paste0("���������� ���������� �������� ����: ", nrow(result)), appendLF = T)
   packageStartupMessage(paste0("������������ ������: ", round(difftime(stop_time, start_time , units ="secs"),0), " ���."), appendLF = T)
-  #Âîçâðàùàåì ðåçóëüòàò
+  #Возвращаем результат
   return(result)}

@@ -9,7 +9,7 @@ yadirGetReport <- function(ReportType = "CAMPAIGN_PERFORMANCE_REPORT",
                            Login = NULL,
                            Token = NULL){
   
-  #Форммируем список полей
+  #Формируем список полей
   Fields <- paste0("<FieldNames>",FieldNames, "</FieldNames>", collapse = "")
   
   #Формируем фильтр

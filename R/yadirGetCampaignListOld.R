@@ -29,7 +29,7 @@ function (logins = NULL, token = NULL) {
   } else {
     
     #If logins more than 100 run cicle by 100 logins
-    #Â ñëó÷àå åñëè ââåäåíî áîëåå 100 ëîãèíîâ íåîõîäèìî îáîéòè îãðàíè÷åíèå API è îòïðàâëÿòü çàïðîñû îòäåëüíî ïî 100 ëîãèíîâ
+	#В случае если введено более 100 логинов неоходимо обойти ограничение API и отправлять запросы отдельно по 100 логинов
     loginsList <- NULL
     start <- 1
     step <- 99
@@ -41,7 +41,7 @@ function (logins = NULL, token = NULL) {
       loginsList <- paste0(paste0("\"",loginstxt,"\""), collapse = ",")
       answer <- POST("https://api.direct.yandex.ru/v4/json/", body = paste0("{\"method\": \"GetCampaignsList\"",ifelse(is.null(logins),"",paste0(",\"param\": [",loginsList,"]")),", \"locale\": \"ru\", \"token\": \"",token,"\"}"))
       #Send POST request
-      #Îòïðàâëÿåì POST çàïðîñ
+      #Отправляем POST запрос
       stop_for_status(answer)
       
       dataRaw <- content(answer, "parsed", "application/json")
@@ -51,16 +51,16 @@ function (logins = NULL, token = NULL) {
         data <- rbind(data, dataTemp)
       }
       #Step on next 100 logins
-      #Ïåðåõîäèì íà ñëåäóþùèå 100 ëîãèíîâ
+      #Переходим на следующие 100 логинов
       start <- start + step + 1
       #If this last part of logins do this
-      #Åñëè ýòî ïîñëåäíÿÿ ïàðòèÿ ëîãèíîâ òî ïåðåõîäèì ê ñëåäóþùåé ïðîöåäóðå
+      #Если это последняя партия логинов то переходим к следующей процедуре
       if(start > (finish - 100)) {
         loginstxt <- logins[start:finish]
         loginsList <- paste0(paste0("\"",loginstxt,"\""), collapse = ",")
         answer <- POST("https://api.direct.yandex.ru/v4/json/", body = paste0("{\"method\": \"GetCampaignsList\"",ifelse(is.null(logins),"",paste0(",\"param\": [",loginsList,"]")),", \"locale\": \"ru\", \"token\": \"",token,"\"}"))
         #Send POST request
-        #Îòïðàâêà POST çàïðîñà
+        #Отправка POST запроса
         stop_for_status(answer)
         dataRaw <- content(answer, "parsed", "application/json")
         for (i in 1:length(dataRaw$data)){

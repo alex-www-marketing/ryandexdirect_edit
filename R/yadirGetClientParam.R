@@ -1,5 +1,5 @@
 yadirGetClientParam <- function(Language = "ru", login = NULL, token = NULL){
-  #Ïðîâåðêà íàëè÷èÿ ëîãèíà è òîêåíà
+  #Проверка наличия логина и токена
   if(is.null(login)|is.null(token)) {
     stop("You must enter login and API token!")
   }
@@ -28,9 +28,9 @@ yadirGetClientParam <- function(Language = "ru", login = NULL, token = NULL){
 }
 }")
   
-  #Îòïðàâêà çàïðîñà íà ñåðâåð
+  #Отправка запроса на сервер
   answer <- POST("https://api.direct.yandex.com/json/v5/clients", body = queryBody, add_headers(Authorization = paste0("Bearer ",token), 'Accept-Language' = Language, "Client-Login" = login[1]))
-  #Ïðîâåðêà ðåçóëüòàòà íà îøèáêè
+  #Проверка результата на ошибки
   stop_for_status(answer)
   
   dataRaw <- content(answer, "parsed", "application/json")
@@ -39,9 +39,9 @@ yadirGetClientParam <- function(Language = "ru", login = NULL, token = NULL){
     stop(paste0(dataRaw$error$error_string, " - ", dataRaw$error$error_detail))
   }
   
-  #Ïðåîáðàçóåì îòâåò â data frame
-  
-  #Ïàðñèíã ñïðàâî÷íèêà ðåãèîíîâ
+  #Преобразуем ответ в data frame
+
+  #Парсинг справочника регионов
     dictionary_df <- data.frame()
     
     for(dr in 1:length(dataRaw$result[[1]])){
@@ -60,13 +60,13 @@ yadirGetClientParam <- function(Language = "ru", login = NULL, token = NULL){
       
     }
 
-    #Âûâîäèì èíôîðìàöèþ î ðàáîòå çàïðîñà è î êîëè÷åñòâå áàëëîâ
-     #packageStartupMessage("Ñïðàâî÷íèê óñïåøíî çàãðóæåí!", appendLF = T)
-     #packageStartupMessage(paste0("Áûëëû ñïèñàíû ñ : " ,answer$headers$`units-used-login`), appendLF = T)
-     #packageStartupMessage(paste0("Ê-âî áàëëîâ èçðàñõîäîâàíûõ ïðè âûïîëíåíèè çàïðîñà: " ,strsplit(answer$headers$units, "/")[[1]][1]), appendLF = T)
-     #packageStartupMessage(paste0("Äîñòóïíûé îñòàòîê ñóòî÷íîãî ëèìèòà áàëëîâ: " ,strsplit(answer$headers$units, "/")[[1]][2]), appendLF = T)
-     #packageStartupMessage(paste0("Ñóòî÷íûé ëèìèò áàëëîâ: " ,strsplit(answer$headers$units, "/")[[1]][3]), appendLF = T)
-     #packageStartupMessage(paste0("Óíèêàëüíûé èäåíòèôèêàòîð çàïðîñà êîòîðûé íåîáõîäèìî óêàçûâàòü ïðè îáðàùåíèè â ñëóæáó ïîääåðæêè: ",answer$headers$requestid), appendLF = T)
-    #Âîçâðàùàåì ðåçóëüòàò â âèäå Data Frame
+    #Выводим информацию о работе запроса и о количестве баллов
+     #packageStartupMessage("Справочник успешно загружен!", appendLF = T)
+     #packageStartupMessage(paste0("Быллы списаны с : " ,answer$headers$`units-used-login`), appendLF = T)
+     #packageStartupMessage(paste0("К-во баллов израсходованых при выполнении запроса: " ,strsplit(answer$headers$units, "/")[[1]][1]), appendLF = T)
+     #packageStartupMessage(paste0("Доступный остаток суточного лимита баллов: " ,strsplit(answer$headers$units, "/")[[1]][2]), appendLF = T)
+     #packageStartupMessage(paste0("Суточный лимит баллов: " ,strsplit(answer$headers$units, "/")[[1]][3]), appendLF = T)
+     #packageStartupMessage(paste0("Уникальный идентификатор запроса который необходимо указывать при обращении в службу поддержки: ",answer$headers$requestid), appendLF = T)
+    #Возвращаем результат в виде Data Frame
   return(dictionary_df)
 }
